@@ -3,6 +3,9 @@ const router = express.Router();
 const mongoose = require("mongoose");
 const passport = require("passport");
 
+//Load validation
+const validatePrfileInput = require("../../validation/profile");
+
 // Load Profile Model
 const Profile = require("../../models/Profile");
 // Load User Model
@@ -42,6 +45,13 @@ router.post(
   "/",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
+    const { errors, isValid } = validatePrfileInput(req.body);
+
+    //Check Validation
+    if (!isValid) {
+      //Return any errors with 400 status
+      return res.status(400).json(errors);
+    }
     //Get fields
     const profileFields = {};
     profileFields.user = req.user.id;
@@ -55,7 +65,7 @@ router.post(
       profileFields.githubusername = req.body.githubusername;
     //Skills - split into array
     if (typeof req.body.skills !== "undefined") {
-      profileFields.skills = req.body.split(",");
+      profileFields.skills = req.body.skills.split(",");
     }
 
     //Social
@@ -68,8 +78,8 @@ router.post(
 
     Profile.findOne({ user: req.user.id }).then(profile => {
       if (profile) {
-        //update
-        Profile.findByIdAndUpdate(
+        // Update
+        Profile.findOneAndUpdate(
           { user: req.user.id },
           { $set: profileFields },
           { new: true }
@@ -83,7 +93,8 @@ router.post(
             errors.handle = "That handle already exists";
             res.status(400).json(errors);
           }
-          //save
+
+          // Save Profile
           new Profile(profileFields).save().then(profile => res.json(profile));
         });
       }
