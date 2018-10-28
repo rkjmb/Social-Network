@@ -61,7 +61,6 @@ router.post(
 //@route DELETE api/posts/:id
 //@desc  DELETE post
 //@access Private
-
 router.delete(
   "/:id",
   passport.authenticate("jwt", { session: false }),
@@ -83,4 +82,23 @@ router.delete(
     });
   }
 );
+
+//@route POST api/like/:id
+//@desc  Like post
+//@access Private
+router.post(
+    "/like/:id",
+    passport.authenticate("jwt", { session: false }),
+    (req, res) => {
+      Profile.findOne({ user: req.user.id }).then(profile => {
+        Post.findById(req.params.id)
+          .then(post => {
+            if(post.likes.filter(like=>like.user.toString()===req.user.id)){
+
+            }
+          })
+          .catch(err => res.status(404).json({ postnotfound: "No post found" }));
+      });
+    }
+  );
 module.exports = router;
